@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333;
+            --chat-bg: #fff;
+            --user-color: #007bff;
+            --bot-color: #28a745;
+            --header-bg: #007bff;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+        }
+
+        body.dark-mode {
+            --bg-color: #1e1e1e;
+            --text-color: #f0f2f5;
+            --chat-bg: #2c2c2c;
+            --user-color: #61dafb;
+            --bot-color: #98c379;
+            --header-bg: #444;
+            --button-bg: #444;
+            --button-hover-bg: #555;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--chat-bg);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-header {
+            background-color: var(--header-bg);
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #chatbox {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: scroll;
+            background-color: var(--chat-bg);
+        }
+
+        .user-message, .bot-message {
+            margin-bottom: 15px;
+            line-height: 1.5;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .user-message {
+            text-align: right;
+            color: var(--user-color);
+        }
+
+        .bot-message {
+            text-align: left;
+            color: var(--bot-color);
+        }
+
+        .input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            background-color: var(--chat-bg);
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            background-color: var(--chat-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: var(--button-bg);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--button-hover-bg);
+            transform: scale(1.05);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <span>Chat with the Bot</span>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+        </div>
+        <div id="chatbox"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask me a question...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to send a message
+        function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            const chatbox = document.getElementById('chatbox');
+
+            if (userInput.trim() === '') return;
+
+            chatbox.innerHTML += `<div class="user-message"><strong>You:</strong> ${userInput}</div>`;
+            document.getElementById('userInput').value = '';
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatbox.innerHTML += `<div class="bot-message"><strong>Bot:</strong> ${data.response}</div>`;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Send message on Enter key press
+        document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+    </script>
+</body>
+</html>

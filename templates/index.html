@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot for learning SQL</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 80vh;
+        }
+
+        .chat-header {
+            background-color: #007bff;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        #chatbox {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: scroll;
+            background-color: #f9f9f9;
+        }
+
+        .user-message, .bot-message {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            text-align: right;
+            color: #007bff;
+        }
+
+        .bot-message {
+            text-align: left;
+            color: #28a745;
+        }
+
+        .input-container {
+            display: flex;
+            border-top: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #007bff;
+            border-radius: 10px;
+        }
+        /* Add fade-in animation for messages */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message, .bot-message {
+            margin-bottom: 15px;
+            line-height: 1.5;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Style for the icons */
+        .user-message::before {
+            content: "\f007";
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            color: #007bff;
+        }
+
+        .bot-message::before {
+            content: "\f086";
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            color: #28a745;
+        }
+
+        /* Hover animation for the send button */
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        /* Add a typing indicator animation */
+        .typing-indicator {
+            display: inline-block;
+            height: 8px;
+            width: 8px;
+            background-color: #28a745;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">Learning SQL with the Virtual Assistant</div>
+        <div id="chatbox"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Ask me a question...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            const chatbox = document.getElementById('chatbox');
+
+            if (userInput.trim() === '') return;
+
+            chatbox.innerHTML += `<div class="user-message"><strong>You:</strong> ${userInput}</div>`;
+            document.getElementById('userInput').value = '';
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatbox.innerHTML += `<div class="bot-message"><strong>Bot:</strong> ${data.response}</div>`;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        // Send message on Enter key press
+        document.getElementById('userInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Theme toggle function
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+    </script>
+</body>
+</html>
+
